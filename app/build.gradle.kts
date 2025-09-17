@@ -64,6 +64,10 @@ dependencies {
 
     implementation("androidx.media3:media3-exoplayer:1.7.1")
     implementation("androidx.media3:media3-ui:1.7.1")
+    implementation("androidx.media3:media3-session:1.7.1")
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("com.google.accompanist:accompanist-permissions:0.37.3")
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+
 }

@@ -39,13 +39,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.media3.common.MediaItem
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.request.ImageResult
 import com.example.audioplayer.R
+import com.example.audioplayer.data.PlayerManager
 import com.example.audioplayer.data.Song
 import kotlinx.coroutines.delay
 import kotlin.random.Random
@@ -57,7 +58,7 @@ fun PlayerScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val exoPlayer = remember { ExoPlayer.Builder(context).build() }
+    val exoPlayer = remember { PlayerManager.ensurePlayer(context) }
     var currentIndex by rememberSaveable { mutableStateOf(initialIndex) }
     var isShuffle by rememberSaveable { mutableStateOf(false) }
     var isRepeat by rememberSaveable { mutableStateOf(false) }
@@ -70,11 +71,13 @@ fun PlayerScreen(
 
     LaunchedEffect(currentIndex, isShuffle) {
         val list = if (isShuffle) shuffledList else songList
-        val song = list.getOrNull(currentIndex) ?: return@LaunchedEffect
-        exoPlayer.setMediaItem(MediaItem.fromUri(song.data))
-        exoPlayer.prepare()
-        exoPlayer.playWhenReady = true
-
+        if (PlayerManager.currentSong.value == null) {
+            PlayerManager.setQueueAndPlay(context, list, currentIndex)
+        } else {
+            // When user changes index via UI
+            exoPlayer.seekTo(currentIndex, 0)
+            if (!exoPlayer.isPlaying) exoPlayer.play()
+        }
     }
     DisposableEffect(exoPlayer) {
         val listener = object : Player.Listener {
@@ -85,19 +88,17 @@ fun PlayerScreen(
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == ExoPlayer.STATE_READY) {
                     duration = exoPlayer.duration
-                    // Handle song end
                 }
                 if (playbackState == ExoPlayer.STATE_ENDED) {
-                    currentIndex =
-                        (currentIndex + 1) % (if (isShuffle) shuffledList.size else songList.size)
-                    // Handle song end
+                    val list = if (isShuffle) shuffledList else songList
+                    currentIndex = (currentIndex + 1) % list.size
                 }
             }
         }
         exoPlayer.addListener(listener)
         onDispose {
-//            exoPlayer.removeListener(listener)
-            exoPlayer.release()
+            // Keep player alive across screens; do not release
+            exoPlayer.removeListener(listener)
         }
     }
     LaunchedEffect(isPlaying) {
