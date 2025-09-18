@@ -2,9 +2,11 @@ package com.example.audioplayer.data
 
 import android.content.Context
 import android.content.Intent
+import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -71,6 +73,7 @@ object PlayerManager {
     // Intentionally do not release on Activity/Composable dispose to keep playback alive.
     fun release() { exoPlayer?.release(); exoPlayer = null }
 
+    @OptIn(UnstableApi::class)
     private fun startService(context: Context) {
         try {
             val intent = Intent(context, com.example.audioplayer.service.AudioPlayerService::class.java)

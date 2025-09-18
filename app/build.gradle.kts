@@ -70,4 +70,6 @@ dependencies {
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
 
+    implementation("com.google.android.gms:play-services-ads:24.6.0")
+
 }
